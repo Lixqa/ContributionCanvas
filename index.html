@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Configurable GitHub Contributions Canvas</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-direction: column;
+    margin: 0;
+    padding: 20px;
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: sans-serif;
+  }
+  canvas {
+    image-rendering: pixelated;
+    border: 1px solid #30363d;
+    margin-top: 20px;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 1000px;
+  }
+  .controls label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+  }
+  input[type="number"], select {
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid #30363d;
+    background: #161b22;
+    color: #c9d1d9;
+  }
+  button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    background: #21262d;
+    color: #c9d1d9;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #30363d;
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <label>Canvas Width (px)
+    <input type="number" id="canvasWidth" value="1000" min="100" max="5000">
+  </label>
+  <label>Canvas Height (px)
+    <input type="number" id="canvasHeight" value="1000" min="100" max="5000">
+  </label>
+  <label>Square Size (px)
+    <input type="number" id="squareSize" value="18" min="5" max="100">
+  </label>
+  <label>Gap (px)
+    <input type="number" id="gap" value="2" min="0" max="20">
+  </label>
+  <label>Corner Radius (px)
+    <input type="number" id="radius" value="4" min="0" max="20">
+  </label>
+  <label>Color Scheme
+    <select id="colorScheme">
+      <option value="dark">GitHub Dark</option>
+      <option value="light">GitHub Light</option>
+    </select>
+  </label>
+  <button id="drawBtn">Draw</button>
+  <button id="saveBtn">Save as PNG</button>
+</div>
+
+<canvas id="contributions" width="1000" height="1000"></canvas>
+
+<script>
+const canvas = document.getElementById('contributions');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+// Color schemes
+const schemes = {
+  dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
+  light: ['#ebedf0','#c6e48b','#7bc96f','#239a3b','#196127']
+};
+
+function drawCanvas() {
+  // Read config
+  const canvasWidth = parseInt(document.getElementById('canvasWidth').value);
+  const canvasHeight = parseInt(document.getElementById('canvasHeight').value);
+  const squareSize = parseInt(document.getElementById('squareSize').value);
+  const gap = parseInt(document.getElementById('gap').value);
+  const radius = parseInt(document.getElementById('radius').value);
+  const scheme = document.getElementById('colorScheme').value;
+  const colors = schemes[scheme];
+
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  // Fill background
+  ctx.fillStyle = scheme === 'dark' ? '#0d1117' : '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Calculate how many squares fit horizontally and vertically
+  const cols = Math.floor(canvasWidth / (squareSize + gap));
+  const rows = Math.floor(canvasHeight / (squareSize + gap));
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const intensity = Math.floor(Math.random() * colors.length);
+      ctx.fillStyle = colors[intensity];
+      const px = x * (squareSize + gap);
+      const py = y * (squareSize + gap);
+
+      // Rounded rectangle
+      ctx.beginPath();
+      ctx.moveTo(px + radius, py);
+      ctx.lineTo(px + squareSize - radius, py);
+      ctx.quadraticCurveTo(px + squareSize, py, px + squareSize, py + radius);
+      ctx.lineTo(px + squareSize, py + squareSize - radius);
+      ctx.quadraticCurveTo(px + squareSize, py + squareSize, px + squareSize - radius, py + squareSize);
+      ctx.lineTo(px + radius, py + squareSize);
+      ctx.quadraticCurveTo(px, py + squareSize, px, py + squareSize - radius);
+      ctx.lineTo(px, py + radius);
+      ctx.quadraticCurveTo(px, py, px + radius, py);
+      ctx.fill();
+    }
+  }
+}
+
+// Draw initial canvas
+drawCanvas();
+
+// Button events
+document.getElementById('drawBtn').addEventListener('click', drawCanvas);
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'github_contributions.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+</script>
+
+</body>
+</html>
